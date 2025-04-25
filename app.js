@@ -31,6 +31,11 @@ app.use("/rides", rideRoutes);
 
 const bookingRoutes = require("./src/routes/BookingRoutes");
 app.use("/booking", bookingRoutes);
+
+const rideRequestRoutes = require("./src/routes/RideRequestRoutes");
+app.use("/ride-requests", rideRequestRoutes); 
+
+
 mongoose.connect("mongodb://127.0.0.1:27017/25_node_internship").then(() => {
     console.log("Database connected...");
 });
