@@ -37,29 +37,54 @@ const loginUser = async (req, res) => {
     }
   };
   
-  const signup = async (req, res) => {
-    //try catch if else...
-    try {
-      //password encrupt..
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(req.body.password, salt);
-      req.body.password = hashedPassword;
-      const createdUser = await UserModel.create(req.body);
-      //sending mail
-      await mailUtil.sendingMail(createdUser.email,"WELCOME TO GREENFUTURE","SUCCESSFULLY REGISTERED IN CAR POOLING");
+const signup = async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
 
-      res.status(201).json({
-        message: "user created..",
-        data: createdUser,
-      });
-    } catch (err) {
-      console.log(err)
-      res.status(500).json({
-        message: "error",
-        data: err,
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({
+        message: "Missing required fields: email, password, firstName, lastName",
       });
     }
-  };
+
+    // Check if the email is already registered
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email is already registered",
+      });
+    }
+
+    // Encrypt password
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    // Create user
+    const createdUser = await UserModel.create({
+      ...req.body,
+      password: hashedPassword,
+    });
+
+    // Send welcome email
+    await mailUtil.sendingMail(
+      createdUser.email,
+      "WELCOME TO GREENFUTURE",
+      "SUCCESSFULLY REGISTERED IN CAR POOLING"
+    );
+
+    res.status(201).json({
+      message: "User created successfully",
+      data: createdUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
 
 const getAllUser = async (req, res) => {
     const users = await UserModel.find().populate("roleId");
